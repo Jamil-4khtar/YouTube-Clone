@@ -33,3 +33,70 @@ screenOverlay.addEventListener("click", () => {
 });
 
 // Add your code here to fetch data from API and populate the dropdown menu
+
+const videoList = document.querySelector(".video-list");
+const searchInput = document.querySelector(".search-input");
+const searchBtn = document.querySelector(".search-button");
+
+const api_key = "AIzaSyCvny8BgZliBGVdkYVUSVHl7vMtgjta3kE";
+const video_http = "https://www.googleapis.com/youtube/v3/videos?";
+const channel_http = "https://www.googleapis.com/youtube/v3/channels?";
+
+fetch(video_http + new URLSearchParams({
+    key: api_key,
+    part: "snippet",
+    chart: "mostPopular",
+    maxResults: 10,
+    regionCode: "IN"
+}))
+    .then((res) => res.json())
+    .then((data) => {
+        // console.log(data);
+        data.items.forEach(item => {
+            getChannelIcon(item);
+        });
+    })
+    .catch((err) => {
+        console.log(err);
+    })
+
+const getChannelIcon = (video_data) => {
+    fetch(channel_http + new URLSearchParams({
+        key: api_key,
+        part: "snippet",
+        id: video_data.snippet.channelId
+    }))
+    .then((res) => res.json())
+    .then((data) => {
+        video_data.channelThumbnail = data.items[0].snippet.thumbnails.default.url;        
+        console.log(video_data);
+        makeVideoCard(video_data);
+    })
+}
+
+const makeVideoCard = (data) => {
+    videoList.innerHTML += `
+        <a href="#" class="video-card" onclick='location.href = "https://www.youtube.com/watch?v=${data.id}"'>
+            <div class="thumbnail-container">
+                <img src="${data.snippet.thumbnails.maxres.url}" alt="Video Thumbnail"
+                class="thumbnail">
+                <p class="duration">10:03</p>
+            </div>
+            <div class="video-info">
+                <img src="${data.channelThumbnail}" alt="Channel Logo" class="icon">
+                <div class="video-details">
+                    <h2 class="title">${data.snippet.title}</h2>
+                    <p class="channel-name">${data.snippet.channelTitle}</p>
+                    <p class="views">27K Views • 4 months ago</p>
+                </div>
+            </div>
+        </a>
+    `
+}
+
+const searchLink = "https://www.youtube.com/results?search_query=";
+searchBtn.addEventListener('click', () => {
+    if(searchInput.value.length){
+        location.href = searchLink + searchInput.value;
+    }
+})
