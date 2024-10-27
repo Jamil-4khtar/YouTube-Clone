@@ -40,14 +40,16 @@ const searchBtn = document.querySelector(".search-button");
 
 const api_key = "AIzaSyCvny8BgZliBGVdkYVUSVHl7vMtgjta3kE";
 const video_http = "https://www.googleapis.com/youtube/v3/videos?";
+const search_http = "https://www.googleapis.com/youtube/v3/search?";
 const channel_http = "https://www.googleapis.com/youtube/v3/channels?";
 
+// HOME PAGE VIDEO LIST FETCH API
 fetch(video_http + new URLSearchParams({
     key: api_key,
     part: "snippet",
     chart: "mostPopular",
-    maxResults: 10,
-    regionCode: "IN"
+    maxResults: 6,
+    // regionCode: "IN"
 }))
     .then((res) => res.json())
     .then((data) => {
@@ -60,25 +62,50 @@ fetch(video_http + new URLSearchParams({
         console.log(err);
     })
 
+// SEARCH VIDEO LIST FETCH API
+searchBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const searchQuery = searchInput.value;
+    fetch(search_http + new URLSearchParams({
+        key: api_key,
+        part: "snippet",
+        q: searchQuery,
+        maxResults: 6
+    }))
+        .then((res) => res.json())
+        .then((data) => {
+            // console.log(data);
+            videoList.innerHTML = "";
+            data.items.forEach(item => {
+                getChannelIcon(item);
+            });
+        })
+        .catch((err) => {
+            console.log(err);
+        })
+});
+
+// CHANNEL DETAILS API
 const getChannelIcon = (video_data) => {
     fetch(channel_http + new URLSearchParams({
         key: api_key,
         part: "snippet",
         id: video_data.snippet.channelId
     }))
-    .then((res) => res.json())
-    .then((data) => {
-        video_data.channelThumbnail = data.items[0].snippet.thumbnails.default.url;        
-        console.log(video_data);
-        makeVideoCard(video_data);
-    })
+        .then((res) => res.json())
+        .then((data) => {
+            video_data.channelThumbnail = data.items[0].snippet.thumbnails.default.url;
+            console.log(video_data);
+            makeVideoCard(video_data);
+        })
 }
 
+// VIDEO CARD MAKEUP
 const makeVideoCard = (data) => {
     videoList.innerHTML += `
         <a href="#" class="video-card" onclick='location.href = "https://www.youtube.com/watch?v=${data.id}"'>
             <div class="thumbnail-container">
-                <img src="${data.snippet.thumbnails.maxres.url}" alt="Video Thumbnail"
+                <img src="${data.snippet.thumbnails.medium.url}" alt="Video Thumbnail"
                 class="thumbnail">
                 <p class="duration">10:03</p>
             </div>
@@ -93,10 +120,3 @@ const makeVideoCard = (data) => {
         </a>
     `
 }
-
-const searchLink = "https://www.youtube.com/results?search_query=";
-searchBtn.addEventListener('click', () => {
-    if(searchInput.value.length){
-        location.href = searchLink + searchInput.value;
-    }
-})
